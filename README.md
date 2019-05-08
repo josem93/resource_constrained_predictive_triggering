@@ -4,8 +4,6 @@ Predictive Triggering Framework for Distributed Control of Resource Constrained 
 Add overview of file structure
 
 
-José Mario Mastrangelo
-
-MPI-IS, ICS
-
+José Mario Mastrangelo <br />
+MPI-IS, ICS <br />
 josema(at)student.ethz.ch; mastrangelo(at)is.mpg.de
