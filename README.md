@@ -5,5 +5,7 @@ Add overview of file structure
 
 
 José Mario Mastrangelo
+
 MPI-IS, ICS
+
 josema(at)student.ethz.ch; mastrangelo(at)is.mpg.de
