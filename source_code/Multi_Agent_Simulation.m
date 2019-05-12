@@ -17,8 +17,8 @@ sim.T = 2;                  % simulation time
 sim.t = 0:sim.dt:sim.T;     % time vector
 
 sim.PROB_TYPE = 'CONTROL';       % problem type {'ESTIMATION','CONTROL'}
-sim.TRIG_TYPE = 'PT';            % trigger type {'ET','PT','PPT','ST'}
-sim.ET_TYPE = 'ET1';
+sim.TRIG_TYPE = 'ET';            % trigger type {'ET','PT','PPT','ST'}
+sim.ET_TYPE = 'ET2';
 sim.SIM_TYPE = 'AV';     % simulation type {'STOCHASTIC', 'AV','CP'}
 sim.INPUT_NOISE = 0;
 
@@ -43,18 +43,12 @@ sim = multi_agent_setup(sim);
 sim.M = 2;                 % number of timesteps to predict ahead
 if(strcmp(sim.SIM_TYPE,'STOCHASTIC'))
     sim.FET_TYPE = 'MC';       % probability soln type {'NUM','MC'}
-    sim.P_CONSTRAINT = 0;      % comm prob constraint {0,1} (send when > h/2)
-    sim.CAST_FLAG = 0;
     sim.delta = 0.02;          % error bound
 elseif(strcmp(sim.SIM_TYPE,'AV'))
     sim.FET_TYPE = 'MC';
-    sim.P_CONSTRAINT = 1;
-    sim.CAST_FLAG = 1;
     sim.delta = 0.01;
 elseif(strcmp(sim.SIM_TYPE,'CP'))
     sim.FET_TYPE = 'MC';
-    sim.P_CONSTRAINT = 1;
-    sim.CAST_FLAG = 0;
     if(sim.INPUT_NOISE)
         sim.delta = 0.02;
     else
@@ -62,10 +56,19 @@ elseif(strcmp(sim.SIM_TYPE,'CP'))
     end
 end
 
-if(strcmp(sim.TRIG_TYPE,'PPT'))
-    sim.PT_period = 5;            % compute and send prob at each period
+if(strcmp(sim.TRIG_TYPE,'ET'))
+    sim.P_CONSTRAINT = 0;
+    sim.CAST_FLAG = 0;
+elseif(strcmp(sim.TRIG_TYPE,'PT'))    
+    sim.P_CONSTRAINT = 1;
+    sim.CAST_FLAG = 1;
+elseif(strcmp(sim.TRIG_TYPE,'PPT'))
+    sim.PT_period = 5;          % compute and send prob at each period
+    sim.P_CONSTRAINT = 1;
+    sim.CAST_FLAG = 1;
 elseif(strcmp(sim.TRIG_TYPE,'ST1'))
     sim.p = 0.7;                  % ST probability upper bound
+    sim.CAST_FLAG = 1;
 end
 
 sim.dz0 = floor(200/(2*sim.nx));
@@ -114,31 +117,31 @@ net = network_setup(sim,net,sim.N);
 
 %% ET slot allocation method (ET1 in for loop)
 
-if(strcmp(sim.ET_TYPE,'ET2'))
-    % ET2: random selection of agents
-    idx = randperm(sim.N,net.K);
-
-else
-    % ET3: leader agents
-    kpl = fix(net.K/sim.lanes);
-    rem = mod(net.K,sim.lanes);
-    extras = zeros(1,sim.lanes);
-    extraIDs = []; ids = [];
-    for n = 1:sim.lanes
-        extras(n) = sim.Nl(n) - kpl;
-        for i = 1:sim.Nl(n)
-            if(i > kpl)
-                ID = sum(sim.Nl(1:n-1)) + i;
-                extraIDs = [extraIDs ID];
-            end
-        end
-    end
-    if(rem ~= 0)
-        if(sum(extras) > rem)
-            ids = extraIDs(randperm(numel(extraIDs),rem));
-        end
-    end    
-end
+% if(strcmp(sim.ET_TYPE,'ET2'))
+%     % ET2: random selection of agents (OLD)
+%     idx = randperm(sim.N,net.K);
+% 
+% elseif(strcmp(sim.ET_TYPE,'ET3'))
+%     % ET3: leader agents
+%     kpl = fix(net.K/sim.lanes);
+%     rem = mod(net.K,sim.lanes);
+%     extras = zeros(1,sim.lanes);
+%     extraIDs = []; ids = [];
+%     for n = 1:sim.lanes
+%         extras(n) = sim.Nl(n) - kpl;
+%         for i = 1:sim.Nl(n)
+%             if(i > kpl)
+%                 ID = sum(sim.Nl(1:n-1)) + i;
+%                 extraIDs = [extraIDs ID];
+%             end
+%         end
+%     end
+%     if(rem ~= 0)
+%         if(sum(extras) > rem)
+%             ids = extraIDs(randperm(numel(extraIDs),rem));
+%         end
+%     end    
+% end
 
 
 %% Initialize agents
@@ -153,24 +156,24 @@ for ID = 1:sim.N
                     AGENTS(ID).comm_slot = ones(1,length(sim.t));
                 end
             elseif(strcmp(sim.SIM_TYPE,'AV'))
-                if(strcmp(sim.ET_TYPE,'ET2'))
-                    if(sum(idx == ID) == 1)
-                        AGENTS(ID).comm_slot = ones(1,length(sim.t));
-                    end
-                else
-                    % leader agents assigned slots 
-                    % assumption is that there are always more vehicles in lane
-                    % than slots per lane
-                    if(AGENTS(ID).pLane >= 1 && AGENTS(ID).pLane <= kpl)
-                        AGENTS(ID).comm_slot = ones(1,length(sim.t));
-                    end
-                    if(~isempty(ids))
-                        if(sum(ids == ID))
-                            AGENTS(ID).comm_slot = ones(1,length(sim.t));                    
-                        end
-                    end
-                
-                end
+%                 if(strcmp(sim.ET_TYPE,'ET2'))
+%                     if(sum(idx == ID) == 1)
+%                         AGENTS(ID).comm_slot = ones(1,length(sim.t));
+%                     end
+%                 else
+%                     % leader agents assigned slots 
+%                     % assumption is that there are always more vehicles in lane
+%                     % than slots per lane
+%                     if(AGENTS(ID).pLane >= 1 && AGENTS(ID).pLane <= kpl)
+%                         AGENTS(ID).comm_slot = ones(1,length(sim.t));
+%                     end
+%                     if(~isempty(ids))
+%                         if(sum(ids == ID))
+%                             AGENTS(ID).comm_slot = ones(1,length(sim.t));                    
+%                         end
+%                     end
+%                 
+%                 end
                 % random selection at each time step inside simulation loop
             end
         else
@@ -205,7 +208,7 @@ elseif(strcmp(sim.SIM_TYPE,'AV'))
     eps(1,:,:) = sqrt(sim.var2)*randn(1,sim.N,length(sim.t));
     eps(2,:,:) = sqrt(sim.var2)*randn(1,sim.N,length(sim.t));
     eps(3,:,:) = sqrt(sim.var2)*randn(1,sim.N,length(sim.t));
-    eps(4,:,:) = sqrt(sim.var3)*randn(1,sim.N,length(sim.t));
+    eps(4,:,:) = sqrt(sim.var2)*randn(1,sim.N,length(sim.t));
 end
 
 for k = 2:length(sim.t)   
@@ -213,7 +216,7 @@ for k = 2:length(sim.t)
     sim.eps = eps(:,:,k);
     
     % randomly assign slots for ET
-    if(strcmp(sim.TRIG_TYPE,'ET'))
+    if(strcmp(sim.TRIG_TYPE,'ET1'))
         if(sim.N > net.K)
             idx = randperm(sim.N,net.K);    
             for ID = 1:sim.N
@@ -265,10 +268,26 @@ for k = 2:length(sim.t)
     
     
     if(strcmp(sim.TRIG_TYPE,'ET'))
-        
-        Np = 0;
-        % Communicate
-        arrayfun( @(obj) obj.ET_comm(sim,k), AGENTS);
+        if(strcmp(sim.ET_TYPE,'ET1'))
+            Np = 0;
+            % Communicate
+            arrayfun( @(obj) obj.ET_comm(sim,k), AGENTS);
+        elseif(strcmp(sim.ET_TYPE,'ET2'))
+            Np = sim.N;
+            % all agent errors
+            errors = [AGENTS.z_curr];
+
+            % priority measure
+            znorms = sqrt(sum(errors.*errors));
+            
+            % send to Network manager
+            slots = NetworkManager_ET(sim,net,znorms);
+            args = num2cell(slots);
+            [AGENTS.comm_slot_mstep] = deal(args{:});
+            
+            % Schedule slots
+            arrayfun( @(obj) obj.schedule_slot(sim,k), AGENTS);
+        end
         
     elseif(strcmp(sim.TRIG_TYPE,'PT'))
 
@@ -551,7 +570,6 @@ end
 sim.runtime = toc(tSim);
 fprintf([reverseStr, 'Done\n\n']);
 fprintf(['\t Simulation completed in ',num2str(sim.runtime),' seconds\n\n']);
-
 
 
 %% POSTPROCESSING
