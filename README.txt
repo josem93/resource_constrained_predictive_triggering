@@ -26,7 +26,10 @@ Agent.m:
 	Contains the class definition for a single agent, where the methods represnt the function
 	blocks (ie., process, predictors, trigger)
 
-
+/Autonomous Vehicles:
+	Folder which contains the lookup tables (currently for sim.delta = 0.01, 
+	sim.Q = diag([9e-6,9e-6,9e-6,9e-6])) and reference velocity generator function, 
+	
 **NOTE: if the sim.delta or the sim.Q parameters are changed, new lookup tables need to be computed.
 
 
