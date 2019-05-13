@@ -47,7 +47,7 @@ elseif(strcmp(sim.TRIG_TYPE,'PPT'))
     sim.PT_period = 5;            % compute and send prob at each period
     sim.P_CONSTRAINT = 1;
     sim.CAST_FLAG = 1;
-elseif(strcmp(sim.TRIG_TYPE,'ST1'))
+elseif(strcmp(sim.TRIG_TYPE,'ST'))
     sim.ub = 0.7;                  % ST probability upper bound
     sim.CAST_FLAG = 1;
 end
