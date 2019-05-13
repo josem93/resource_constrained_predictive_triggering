@@ -9,8 +9,8 @@ Control (CACC) system for on a 5 lane highway, where each lane follows a referen
 
 To run the CACC simulations, the user requires Matlab version R2010a or higher (due to class 
 definitions) and have the Statistics and Machine Learning toolbox installed. A single simulation may
-be performed by running Multi_Agent_Simulation.m. The following are key files needed to modify the
-simulaitons:
+be performed by running Multi_Agent_Simulation.m. The following are key files needed to modify/analyze
+the simulations:
 
 Multi_Agent_Simulation.m:	
 	Runs a single simulation using the parameters defined in params.m and
