@@ -31,7 +31,7 @@ else
             end
         end
 
-    elseif(strcmp(trig_type,'ST1') || strcmp(trig_type,'ST2'))
+    elseif(strcmp(trig_type,'ST') || strcmp(trig_type,'ST2'))
 
         H = zeros(1,size(z,2));
         for i = 1:size(z,2)

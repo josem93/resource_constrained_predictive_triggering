@@ -180,7 +180,7 @@ if(strcmp(trig_type,'PT') || strcmp(trig_type,'PPT'))
     end
     
 
-elseif(strcmp(trig_type,'ST1'))
+elseif(strcmp(trig_type,'ST'))
 % in this case H represents the M values sent to NetMan
 % priority goes first to PT agents
 

@@ -20,6 +20,9 @@ end
 if(strcmp(sim.SIM_TYPE,'STOCHASTIC'))
 addpath(genpath(strcat(pwd,'/Stochastic Processes')));
 
+sim.N = 5;          % number of agents
+sim.T = 5;          % simulation time
+
 sim.nx = 1;         % number of states
 sim.nu = 1;         % number of inputs
 sim.ny = 1;         % number of outputs
@@ -107,7 +110,7 @@ sim.t = 0:sim.dt:sim.T;    % time vector
 if(nargin < 2)
 %     sim.lanes = 1;             % # lanes
     sim.lanes = 5;             % # lanes
-    sim.Nl = 20*ones(1,sim.lanes);   % # vehicles per lane
+    sim.Nl = 8*ones(1,sim.lanes);   % # vehicles per lane
     sim.N = sum(sim.Nl);     % number of agents
 end
 
@@ -117,26 +120,10 @@ for i = 1:sim.lanes
     ylc(i) = sim.lwidth/2 + (i-1)*sim.lwidth;
 end
 
-% dynamic ET parameters (Heemels)
-% sim.rho = 0.04;
-% sim.epvar =0.5;
-% sim.ep = 0.01;
-% sim.tmad = 0.026;
-% sim.tmiet = 0.072;
-% sim.lambda = 0.305;
-% sim.gamma = 8.442;
-% sim.phi0 = 3.279;
-% sim.phi1 = 8.557;
-
 sim.h = 0.7;               % time gap [s]
 sim.tau = 0.1;            % engine driveline time constant [s]
 sim.r = 2.5*ones(sim.N,1);  % standstill distance [m] (set to 0 if highway simulation)
 sim.L = 4*ones(sim.N,1);    % vehicle lengths
-
-% sim.commDelay = 2;         % communication delay [integer factor of dt]
-% for ID = 1:sim.N
-%     buffer(ID) = Queue(sim.commDelay);        % network buffers for delay
-% end
 
 % controller gains
 kp = 0.2;
@@ -170,35 +157,34 @@ sim.aref = zeros(sim.lanes,length(sim.t));
 sim.adotref = zeros(sim.lanes,length(sim.t));
 sim.uref = zeros(sim.lanes,length(sim.t));
 
-sim.var1 = 2.5e-5;%6.4e-5;   
+sim.var1 = 2.5e-5;%6.4e-5;
 sim.var2 = 9e-6;%1e-6;
 sim.var3 = eps;
-
 
 % adjacency matrix for communication
 % sim.Adj = zeros(sim.N);
 
 % all vehicles in lane communicate to each other
-str = '';
-for n = 1:sim.lanes
-    a{n} = ones(sim.Nl(n));
-    str = [str,'a{',num2str(n),'}'];
-    if(n ~= sim.lanes)
-        str = [str,','];
-    end
-end
-sim.Adj = eval(['blkdiag(',str,')']);
-sim.deg = sum(sim.Adj,2);
+% str = '';
+% for n = 1:sim.lanes
+%     a{n} = ones(sim.Nl(n));
+%     str = [str,'a{',num2str(n),'}'];
+%     if(n ~= sim.lanes)
+%         str = [str,','];
+%     end
+% end
+% sim.Adj = eval(['blkdiag(',str,')']);
+% sim.deg = sum(sim.Adj,2);
 
 % distributed gains
-sim.F = 18*ones(1,3);%sim.K;
-sim.G = 0.01;
+% sim.F = 18*ones(1,3);%sim.K;
+% sim.G = 0.01;
 
 % if all gents communicate to each other
-sim.sumAF1 = (1/sim.deg(1))*sim.N*sim.F(1);
-sim.sumAF2 = (1/sim.deg(1))*sim.N*sim.F(2);
-sim.sumAF3 = (1/sim.deg(1))*sim.N*sim.F(3);
-sim.sumAG = (1/sim.deg(1))*sim.N*sim.G;
+% sim.sumAF1 = (1/sim.deg(1))*sim.N*sim.F(1);
+% sim.sumAF2 = (1/sim.deg(1))*sim.N*sim.F(2);
+% sim.sumAF3 = (1/sim.deg(1))*sim.N*sim.F(3);
+% sim.sumAG = (1/sim.deg(1))*sim.N*sim.G;
 
 % Method with modified PT framework (predict u) - Distributed CACC
 % sim.A = [   0           1           0;
@@ -227,9 +213,8 @@ sim.A = eye(sim.nx) + sim.dt*sim.A;
 sim.B = sim.dt*sim.B;
 sim.Bff = sim.dt*sim.Bff;
 
-% sim.Q = diag(sim.var*ones(sim.nx,1));          % diagonal covariance matrix
-% sim.Q = diag([sim.var1; sim.var2*ones(sim.nx-1,1)]);
-sim.Q = diag([sim.var2;sim.var3;sim.var2;kp*sim.var1+kd*sim.var2]);
+% diagonal covariance matrix
+sim.Q = diag([sim.var2;sim.var2;sim.var2;kp*sim.var2+kd*sim.var2]);
 
 
 for agent = 1:sim.N
@@ -238,13 +223,14 @@ for agent = 1:sim.N
 end
 clear agent;
 
+% Initialize position and velocity of vehicles
+v_init = zeros(sim.N,1);            % initial vehicle velocities [m/s]
+d_init = 5*ones(sim.lanes,1);       % initial inter-vehicle distance [m]
+
 sim.x0 = zeros(sim.nx,1,sim.N);
 sim.x = zeros(sim.nx,length(sim.t),sim.N);
 sim.xref = zeros(sim.nx,length(sim.t),sim.lanes);
 
-% Initialize position and velocity of vehicles
-v_init = zeros(sim.N,1);            % initial vehicle velocities [m/s]
-d_init = 5*ones(sim.lanes,1);
 for n = 1:sim.lanes
     for i = 1:sim.Nl(n)+1
         if(i == 1)
@@ -288,9 +274,11 @@ end
 
 
 %% Cart-Pole Simulation
-
 if(strcmp(sim.SIM_TYPE, 'CP'))
 addpath(genpath(strcat(pwd,'/Cart-Pole')));
+
+sim.N = 10;                 % number of agents
+sim.T = 60;                 % experiment time [s]
 
 % simulated agents
 if(sim.CP_TYPE)

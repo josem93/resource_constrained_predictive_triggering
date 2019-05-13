@@ -98,7 +98,7 @@ if(strcmp(sim.TRIG_TYPE,'PT') || strcmp(sim.TRIG_TYPE,'PPT'))
     sim.reset_prob = reset_prob;
     clear prob reset_prob P; 
     
-elseif(strcmp(sim.TRIG_TYPE,'ST1')||strcmp(sim.TRIG_TYPE,'ST2'))
+elseif(strcmp(sim.TRIG_TYPE,'ST')||strcmp(sim.TRIG_TYPE,'ST2'))
     
     % lookup table to determine M
     if(strcmp(sim.SIM_TYPE,'STOCHASTIC'))
@@ -219,7 +219,7 @@ if(strcmp(sim.TRIG_TYPE,'PT') || strcmp(sim.TRIG_TYPE,'PPT'))
     sim.reset_prob = reset;
     clear prob reset_prob; 
     
-elseif(strcmp(sim.TRIG_TYPE,'ST1')||strcmp(sim.TRIG_TYPE,'ST2'))
+elseif(strcmp(sim.TRIG_TYPE,'ST')||strcmp(sim.TRIG_TYPE,'ST2'))
     % lookup table to determine M
     if(strcmp(sim.SIM_TYPE,'STOCHASTIC'))
         folder = 'Stochastic Processes';
